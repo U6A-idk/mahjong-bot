@@ -1,6 +1,6 @@
 from collections import Counter
 Dictionary_Suits={1:"bamboo",2:"dots",3:"characters",4:"honors",5:"bonus"}
-Dictionary_Ranks={1:"one",2:"two",3:"three",4:"four",5:"five",6:"six",7:"seven",8:"eight",9:"nine",10:"ten",11:"dragon",12:"flower",13:"season"}
+Dictionary_Ranks={1:"one",2:"two",3:"three",4:"four",5:"five",6:"six",7:"seven",8:"eight",9:"nine",10:"dragon",11:"flower",12:"season"}
 Pengs=[]
 Chis=[]
 Mirrors=[]
