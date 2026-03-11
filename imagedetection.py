@@ -42,8 +42,8 @@ for _, row in df.iterrows():
 
 # Define parameters for the loader
 batch_size = 32
-img_height = 180
-img_width = 180
+img_height = 320
+img_width = 240
 
 # Validation split
 train_dataset = tf.keras.utils.image_dataset_from_directory(
@@ -88,6 +88,105 @@ normalization_layer = layers.Rescaling(1./255)
 normalized_train_ds = train_dataset.map(lambda x, y: (normalization_layer(x), y))
 image_batch, labels_batch = next(iter(normalized_train_ds))
 first_image = image_batch[0]
+
+# Create the model
+num_classes = len(class_names)
+
+model = Sequential([
+  layers.Rescaling(1./255, input_shape=(img_height, img_width, 3)),
+  layers.Conv2D(16, 3, padding='same', activation='relu'),
+  layers.MaxPooling2D(),
+  layers.Conv2D(32, 3, padding='same', activation='relu'),
+  layers.MaxPooling2D(),
+  layers.Conv2D(64, 3, padding='same', activation='relu'),
+  layers.MaxPooling2D(),
+  layers.Flatten(),
+  layers.Dense(128, activation='relu'),
+  layers.Dense(num_classes)
+])
+
+# Data augmentation
+data_augmentation = keras.Sequential(
+  [
+    layers.RandomFlip("horizontal",
+                      input_shape=(img_height,
+                                  img_width,
+                                  3)),
+    layers.RandomRotation(0.1),
+    layers.RandomZoom(0.1),
+  ]
+)
+
+# Visualize augmented images
+plt.figure(figsize=(10, 10))
+for images, _ in train_dataset.take(1):
+  for i in range(9):
+    augmented_images = data_augmentation(images)
+    ax = plt.subplot(3, 3, i + 1)
+    plt.imshow(augmented_images[0].numpy().astype("uint8"))
+    plt.axis("off")
+
+# Dropout introduction
+model = Sequential([
+  data_augmentation,
+  layers.Rescaling(1./255, input_shape=(img_height, img_width, 3)),
+  layers.Conv2D(16, 3, padding='same', activation='relu'),
+  layers.MaxPooling2D(),
+  layers.Conv2D(32, 3, padding='same', activation='relu'),
+  layers.MaxPooling2D(),
+  layers.Conv2D(64, 3, padding='same', activation='relu'),
+  layers.MaxPooling2D(),
+  layers.Flatten(),
+  layers.Dense(128, activation='relu'),
+  layers.Dropout(0.2),
+  layers.Dense(num_classes)
+])
+
+# Compile the model again after adding dropout and data augmentation
+model.compile(optimizer='adam',
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+model.summary()
+
+# Train the model
+epochs = 250
+history = model.fit(
+  train_dataset,
+  validation_data=validate_dataset,
+  epochs=epochs
+)
+
+# Visualize training results
+acc = history.history['accuracy']
+val_acc = history.history['val_accuracy']
+
+loss = history.history['loss']
+val_loss = history.history['val_loss']
+
+epochs_range = range(epochs)
+
+plt.figure(figsize=(8, 8))
+plt.subplot(1, 2, 1)
+plt.plot(epochs_range, acc, label='Training Accuracy')
+plt.plot(epochs_range, val_acc, label='Validation Accuracy')
+plt.legend(loc='lower right')
+plt.title('Training and Validation Accuracy')
+
+plt.subplot(1, 2, 2)
+plt.plot(epochs_range, loss, label='Training Loss')
+plt.plot(epochs_range, val_loss, label='Validation Loss')
+plt.legend(loc='upper right')
+plt.title('Training and Validation Loss')
+plt.show()
+
+# Convert the model.
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+tflite_model = converter.convert()
+
+# Save the model.
+with open('model.tflite', 'wb') as f:
+  f.write(tflite_model)
+
 
 
 
