@@ -1,0 +1,150 @@
+Dictionary_Suits={1:"bamboo",2:"dots",3:"characters",4:"honors",5:"bonus"}
+
+Eyes = []
+Pengs = []
+Chis = []   
+Kons = []
+Possible =[]
+points = 0
+
+def count_suits(hand):
+
+    suits = [0,0,0,0,0]
+
+    for tile in hand:
+        suits[(tile-1)//9] += 1
+
+    return suits
+
+# N_hands for normal + honours
+# B_hands for bonus(Flowers,seasons)
+N_hand = [4,4,4,5,5,5,6,6,6,1,1,1,9,9]
+B_hand = [38,39,40,41,42]
+Pengs.clear()
+Chis.clear()
+Eyes.clear()
+Kons.clear()
+Possible.clear()
+Suits_S=count_suits(N_hand)
+
+
+if Suits_S[1] == 0 and Suits_S[2] == 0:
+    points += 1
+elif Suits_S[0] == 0 and Suits_S[1] == 0:
+    points += 1
+elif Suits_S[0] == 0 and Suits_S[2] == 0:
+    points += 1
+
+
+
+
+
+
+#wind scoring
+#must be 28(E),29(S),30(W),31(N)
+prevailing_wind = 28      
+seat_wind = 29
+for i, j in enumerate(Possible, 1):
+    if prevailing_wind in j["kons"] or prevailing_wind in j["pengs"]: 
+        points += 1
+    if seat_wind in j["kons"] or seat_wind in j["pengs"]:
+        points += 1
+
+
+#dragon pengs
+dragons = [31,32,33]
+for i, j in enumerate(Possible, 1):
+    for i in dragons:
+        if i in j["kons"] or i in j["pengs"]:
+            points += 1
+
+
+
+#all pengs/kons
+for i, j in enumerate(Possible, 1):
+    if len(j["pengs"]) + len(j["kons"]) == 4:
+        points += 1
+
+        #if all dragons
+        if set(j["pengs"] + j["kons"]).issubset(set(dragons)):
+            points += 1
+    
+        #if all winds   
+        if set(j["pengs"] + j["kons"]).issubset(set(range(28,32))):
+            points += 1
+
+        #if mixed terminals and honours    
+        Mix_Term=[1,9,10,18,19,28,29,30,31,32,33,34]
+        if set(j["pengs"] + j["kons"]).issubset(set(Mix_Term)):
+            points += 1
+
+
+
+
+
+
+
+
+# one suit
+for i, j in enumerate(Possible, 1):
+    suit = set()
+    for tile in j["pengs"] + j["chis"] + j["kons"] + j["eyes"]:
+        suit.add(Dictionary_Suits[(tile-1)//9 +1])
+    
+    #all same
+    if len(suit) == 1:
+        points += 1 
+
+
+        # nine gates
+        for i in range(1,3):
+                if set(N_hand).issubset(set(range((i-1)*9+1, i*9))):
+                    points += 1
+    
+    
+    
+    if len(suit) == 2 and "honors" in suit:
+        points += 1
+    
+
+
+#flowers
+flowers = [35,36,37,38,39,40,41,42]
+    #seat wind matching
+for i in flowers[0:4]:
+    if i in set(B_hand) and i+4 in set(B_hand) and seat_wind == i-10:
+        points += 1
+    #if all inside
+if set(flowers).issubset(set(B_hand)):
+    points += 1
+    # if flowers
+if set(flowers[0:4]).issubset(set(B_hand)):
+    points += 1
+    # if seasons
+if set(flowers[4:8]).issubset(set(B_hand)):
+    points += 1
+
+#orphans
+orphans = {1,9,10,18,19,27,28,29,30,31,32,33,34}
+if set(N_hand) == orphans and len(N_hand) == 14:
+    points += 1
+
+print(points)
+
+#jade hand
+jade=[2,3,4,5,6,8,33]
+if set(N_hand).issubset(jade):
+    points += 1
+#help
+"""
+need to add self drawing score(1 point)
+            flower drawing score(1 point)
+            last tile draw score(1 point)
+????????
+change points to proper score
+
+
+
+
+
+"""
